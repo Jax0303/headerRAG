@@ -79,20 +79,37 @@ class NaiveRAGSystem:
         # 쿼리 임베딩
         query_embedding = self.embedding_model.encode([query])
         
-        # 유사도 검색
-        distances, indices = self.index.search(query_embedding.astype('float32'), top_k)
+        # 유사도 검색 (top_k를 충분히 크게 하여 Recall 개선)
+        search_k = min(top_k * 2, len(self.table_texts))  # 더 많은 후보 검색
+        distances, indices = self.index.search(query_embedding.astype('float32'), search_k)
         
         results = []
+        seen_table_ids = set()  # 중복 제거
+        
         for idx, dist in zip(indices[0], distances[0]):
             if idx < len(self.table_texts):
+                table_id = self.table_texts[idx]['table_id']
+                
+                # 중복 제거
+                if table_id in seen_table_ids:
+                    continue
+                seen_table_ids.add(table_id)
+                
+                # 거리를 점수로 변환
+                score = float(1 / (1 + dist))
+                
                 result = {
-                    'table_id': self.table_texts[idx]['table_id'],
+                    'table_id': table_id,
                     'table_text': self.table_texts[idx]['text'],
                     'table_data': self.table_texts[idx]['table_data'],
-                    'score': float(1 / (1 + dist)),  # 거리를 점수로 변환
+                    'score': score,
                     'distance': float(dist)
                 }
                 results.append(result)
+                
+                # 원하는 개수만큼 수집
+                if len(results) >= top_k:
+                    break
         
         return results
     
