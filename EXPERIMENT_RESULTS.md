@@ -2,10 +2,16 @@
 
 ## 📊 실험 개요
 
-- **실험 시간**: 2025-11-05 19:26:27
+- **최신 실험 시간**: 2025-11-06 13:31:27
 - **총 테이블 수**: 26개
 - **총 쿼리 수**: 300개
-- **데이터셋**: RAG-Evaluation-Dataset-KO (전체)
+- **사용된 데이터셋**: 
+  - RAG-Evaluation-Dataset-KO: 26개 테이블 ✅
+  - PubTables-1M: 0개 (데이터 없음)
+  - TabRecSet: 0개 (데이터 없음)
+  - KorWikiTabular: 0개 (데이터 없음)
+
+**참고**: 현재는 RAG-Evaluation-Dataset-KO만 실제 데이터가 로드되어 실험 진행되었습니다. 다른 데이터셋은 다운로드 후 사용 가능합니다.
 
 ---
 
@@ -119,36 +125,89 @@
 
 다음 시각화 파일이 생성되었습니다:
 
-- `results/visualizations/rag_precision_comparison.png`
-- `results/visualizations/rag_recall_comparison.png`
-- `results/visualizations/rag_f1_comparison.png`
-- `results/visualizations/rag_mrr_comparison.png`
-- `results/visualizations/baseline_rag_rag.png`
+### 파싱 성능 시각화
+- `results/visualizations/parsing_parsing_time_comparison.png` - 파싱 시간 비교
+- `results/visualizations/parsing_parsing_speed_comparison.png` - 파싱 속도 비교
+- `results/visualizations/parsing_structure_richness.png` - 구조 풍부도 분석
+- `results/visualizations/parsing_header_detection_rate.png` - 헤더 감지율
+- `results/visualizations/parsing_summary_statistics.png` - 파싱 요약 통계
+- `results/visualizations/baseline_parsing_parsing.png` - 베이스라인 파싱 비교
+
+### RAG 성능 시각화
+- `results/visualizations/rag_precision_comparison.png` - Precision 비교
+- `results/visualizations/rag_recall_comparison.png` - Recall 비교
+- `results/visualizations/rag_f1_comparison.png` - F1 Score 비교
+- `results/visualizations/rag_mrr_comparison.png` - MRR 비교
+- `results/visualizations/rag_retrieve_time_comparison.png` - 검색 시간 비교
+- `results/visualizations/rag_summary_statistics.png` - RAG 요약 통계
+- `results/visualizations/baseline_rag_rag.png` - 베이스라인 RAG 비교
 
 ---
 
 ## 결과 파일 위치
 
-- **실험 요약**: `results/full_experiment_summary.json`
-- **파싱 성능 테이블**: `results/analysis/parsing_performance_table.csv`
-- **RAG 성능 테이블**: `results/analysis/rag_performance_table.csv`
-- **전체 로그**: `results/full_experiment_log.txt`
+### 최신 실험 결과 (2025-11-06)
+
+- **실험 요약**: `results/all_datasets_experiment_summary.json`
+- **파싱 성능 테이블**: `results/analysis/all_datasets_parsing_performance.csv`
+- **RAG 성능 테이블**: `results/analysis/all_datasets_rag_performance.csv`
+- **RAG 성능 테이블 (LaTeX)**: `results/analysis/all_datasets_rag_performance.tex`
+
+### 실험 디렉토리
+
+- **실험 1 (파싱)**: `results/experiment_1_all_datasets/`
+- **실험 2 (RAG)**: `results/experiment_2_all_datasets/`
+- **시각화**: `results/visualizations/`
+
+---
+
+## 데이터셋별 실험 상태
+
+| 데이터셋 | 로드된 테이블 수 | 상태 | 다운로드 필요 |
+|:--------|:---------------|:-----|:------------|
+| RAG-Evaluation-Dataset-KO | 26개 | ✅ 완료 | - |
+| PubTables-1M | 0개 | ⚠️ 데이터 없음 | 예 |
+| TabRecSet | 0개 | ⚠️ 데이터 없음 | 예 |
+| KorWikiTabular | 0개 | ⚠️ 데이터 없음 | 예 |
+
+**다운로드 가이드**: 각 데이터셋의 `data/{dataset_name}/DOWNLOAD_GUIDE.md` 파일 참조
 
 ---
 
 ## 결론
 
-1. **파싱 실험**: 26개 테이블 처리 완료, Ground Truth 없이 구조 분석 수행
-2. **RAG 실험**: 300개 쿼리 평가 완료, 검색 성능은 낮지만 두 방법 간 차이는 미미함
-3. **다음 단계**: 답변 생성 모듈 추가 및 데이터셋 확장 필요
+### 실험 1: 파싱 성능 비교
+- ✅ 26개 테이블 처리 완료
+- ✅ 레이블링 파싱 vs Naive 파싱 비교 완료
+- ✅ 베이스라인 모델 (TATR, Sato) 포함 평가
+
+### 실험 2: RAG 성능 비교
+- ✅ 300개 쿼리 평가 완료
+- ✅ KG-RAG vs Naive RAG 비교 완료
+- ✅ 베이스라인 모델 (TableRAG) 포함 평가
+- 📊 검색 성능: KG-RAG와 Naive RAG 간 차이는 미미함 (~1%)
+- 📊 MRR: KG-RAG가 약간 우수 (+2.31%)
+
+### 주요 발견사항
+
+1. **검색 성능이 낮은 이유**
+   - 데이터셋 규모 제한 (26개 테이블)
+   - Ground Truth 매칭 문제
+   - 답변 생성 모듈 미구현
+
+2. **KG-RAG vs Naive RAG**
+   - 현재 데이터셋 규모에서는 성능 차이 미미
+   - 대규모 데이터셋에서 더 명확한 차이 기대
 
 ---
 
 ## 향후 계획
 
-1. ✅ 전체 데이터셋 실험 완료
-2. ⏳ 답변 생성 모듈 구현
-3. ⏳ 대규모 데이터셋 실험 (100개 이상 테이블)
-4. ⏳ 도메인별 성능 분석
-5. ⏳ 베이스라인 모델과의 상세 비교
+1. ✅ 모든 데이터셋 실험 프레임워크 완료
+2. ✅ 실험 보고서 업데이트 완료
+3. ⏳ 추가 데이터셋 다운로드 및 실험
+4. ⏳ 답변 생성 모듈 구현
+5. ⏳ 대규모 데이터셋 실험 (100개 이상 테이블)
+6. ⏳ 도메인별 성능 분석
+7. ⏳ 베이스라인 모델과의 상세 비교
 
