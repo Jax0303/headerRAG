@@ -432,6 +432,257 @@ https://huggingface.co/datasets/allganize/RAG-Evaluation-Dataset-KO
             print("   수동 다운로드 가이드를 참고하세요.")
             return self.download_tabrecset(output_subdir)
     
+    def download_tablebank(self,
+                          output_subdir: str = "tablebank",
+                          github_repo: str = "https://github.com/doc-analysis/TableBank.git") -> Path:
+        """
+        TableBank 데이터셋 다운로드 (GitHub)
+        
+        Args:
+            output_subdir: 저장할 하위 디렉토리
+            github_repo: GitHub 저장소 URL
+        
+        Returns:
+            저장된 디렉토리 경로
+        """
+        dataset_dir = self.output_dir / output_subdir
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        print("="*70)
+        print("TableBank 데이터셋 다운로드")
+        print("="*70)
+        print("\n📝 다운로드 방법:")
+        print(f"1. GitHub 저장소: {github_repo}")
+        print("\n💡 특징:")
+        print("  - 문서 분석용 표 검출 및 인식 데이터셋")
+        print("  - Word 및 LaTeX 문서에서 추출")
+        print("  - 다양한 표 구조 포함")
+        
+        # 다운로드 가이드 파일 생성
+        guide_path = dataset_dir / "DOWNLOAD_GUIDE.md"
+        with open(guide_path, 'w', encoding='utf-8') as f:
+            f.write(f"""# TableBank 다운로드 가이드
+
+## 다운로드 방법
+
+### 방법 1: Git으로 클론
+```bash
+git clone {github_repo}
+cd TableBank
+# 데이터셋 파일 확인 및 다운로드
+```
+
+### 방법 2: 직접 다운로드
+GitHub 저장소에서 데이터셋 파일 다운로드:
+{github_repo}
+
+## 데이터셋 특징
+- 문서 분석용 표 검출 및 인식 데이터셋
+- Word 및 LaTeX 문서에서 추출
+- 다양한 표 구조 포함
+
+## 사용 방법
+```python
+from utils.download_datasets import DatasetDownloader
+
+downloader = DatasetDownloader()
+tablebank_dir = downloader.download_tablebank()
+```
+""")
+        
+        # Git 클론 시도
+        if not (dataset_dir / ".git").exists():
+            try:
+                print(f"\nGitHub 저장소 클론 시도: {github_repo}")
+                subprocess.run(
+                    ["git", "clone", github_repo, str(dataset_dir)],
+                    check=False,
+                    capture_output=True
+                )
+                if (dataset_dir / ".git").exists():
+                    print(f"✅ 클론 완료: {dataset_dir}")
+                else:
+                    print("💡 수동 클론 필요:")
+                    print(f"   git clone {github_repo} {dataset_dir}")
+            except Exception as e:
+                print(f"경고: 자동 다운로드 실패: {e}")
+                print(f"💡 직접 실행: git clone {github_repo} {dataset_dir}")
+        
+        print(f"\n✅ 가이드 파일 생성: {guide_path}")
+        return dataset_dir
+    
+    def download_synthtabnet(self,
+                            output_subdir: str = "synthtabnet",
+                            github_repo: str = "https://github.com/IBM/SynthTabNet.git",
+                            download_data: bool = False) -> Path:
+        """
+        SynthTabNet 데이터셋 다운로드
+        
+        Args:
+            output_subdir: 저장할 하위 디렉토리
+            github_repo: GitHub 저장소 URL
+            download_data: 실제 데이터 다운로드 여부 (False면 가이드만 생성)
+        
+        Returns:
+            저장된 디렉토리 경로
+        """
+        dataset_dir = self.output_dir / output_subdir
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        print("="*70)
+        print("SynthTabNet 데이터셋 다운로드")
+        print("="*70)
+        print("\n📝 다운로드 방법:")
+        print(f"1. GitHub 저장소: {github_repo}")
+        print("\n💡 특징:")
+        print("  - 합성적으로 생성된 표 레이아웃 데이터셋")
+        print("  - 약 60만 개의 PNG 이미지와 JSONL 주석")
+        print("  - 4가지 스타일: Fintabnet, Marketing, PubTabNet, Sparse")
+        print("  - 모든 셀에 바운딩 박스 포함")
+        
+        # 다운로드 가이드 파일 생성
+        guide_path = dataset_dir / "DOWNLOAD_GUIDE.md"
+        with open(guide_path, 'w', encoding='utf-8') as f:
+            f.write(f"""# SynthTabNet 다운로드 가이드
+
+## 다운로드 방법
+
+### 방법 1: GitHub 코드 클론
+```bash
+git clone {github_repo}
+cd SynthTabNet
+```
+
+### 방법 2: 실제 데이터 다운로드 (v2.0.0)
+데이터는 별도로 다운로드해야 합니다:
+
+| 스타일 | 레코드 | 크기 | URL |
+|--------|--------|------|-----|
+| Fintabnet | 150k | 10GB | https://ds4sd-public-artifacts.s3.eu-de.cloud-object-storage.appdomain.cloud/datasets/synthtabnet%5Fpublic/v2.0.0/fintabnet.zip |
+| Marketing | 150k | 8GB | https://ds4sd-public-artifacts.s3.eu-de.cloud-object-storage.appdomain.cloud/datasets/synthtabnet%5Fpublic/v2.0.0/marketing.zip |
+| PubTabNet | 150k | 6GB | https://ds4sd-public-artifacts.s3.eu-de.cloud-object-storage.appdomain.cloud/datasets/synthtabnet%5Fpublic/v2.0.0/pubtabnet.zip |
+| Sparse | 150k | 3GB | https://ds4sd-public-artifacts.s3.eu-de.cloud-object-storage.appdomain.cloud/datasets/synthtabnet%5Fpublic/v2.0.0/sparse.zip |
+
+각 ZIP 파일을 다운로드한 후 압축 해제하여 이 디렉토리에 저장하세요.
+
+## 데이터셋 특징
+- 합성적으로 생성된 표 레이아웃
+- 약 60만 개의 PNG 이미지와 JSONL 주석
+- 4가지 스타일 (Fintabnet, Marketing, PubTabNet, Sparse)
+- 모든 셀에 바운딩 박스 포함
+- HTML 형식의 표 구조 포함
+
+## 데이터 형식
+- 이미지: PNG 파일
+- 주석: JSONL 파일 (각 라인이 JSON 객체)
+- 각 JSON 객체는 HTML 형식의 표 구조와 셀 정보 포함
+
+## 사용 방법
+```python
+from utils.download_datasets import DatasetDownloader
+
+downloader = DatasetDownloader()
+synthtabnet_dir = downloader.download_synthtabnet()
+```
+""")
+        
+        # GitHub 저장소 클론
+        if not (dataset_dir / ".git").exists():
+            try:
+                print(f"\nGitHub 저장소 클론 시도: {github_repo}")
+                subprocess.run(
+                    ["git", "clone", github_repo, str(dataset_dir)],
+                    check=False,
+                    capture_output=True
+                )
+                if (dataset_dir / ".git").exists():
+                    print(f"✅ 클론 완료: {dataset_dir}")
+                else:
+                    print("💡 수동 클론 필요:")
+                    print(f"   git clone {github_repo} {dataset_dir}")
+            except Exception as e:
+                print(f"경고: 자동 클론 실패: {e}")
+        
+        print(f"\n✅ 가이드 파일 생성: {guide_path}")
+        print("⚠️  주의: 실제 데이터(이미지/JSONL)는 별도로 다운로드해야 합니다.")
+        return dataset_dir
+    
+    def download_tabrecset_github(self,
+                                  output_subdir: str = "tabrecset_maxkinny",
+                                  github_repo: str = "https://github.com/MaxKinny/TabRecSet.git") -> Path:
+        """
+        TabRecSet 데이터셋 다운로드 (MaxKinny GitHub 저장소)
+        
+        Args:
+            output_subdir: 저장할 하위 디렉토리
+            github_repo: GitHub 저장소 URL
+        
+        Returns:
+            저장된 디렉토리 경로
+        """
+        dataset_dir = self.output_dir / output_subdir
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        print("="*70)
+        print("TabRecSet 데이터셋 다운로드 (MaxKinny)")
+        print("="*70)
+        print("\n📝 다운로드 방법:")
+        print(f"1. GitHub 저장소: {github_repo}")
+        print("\n💡 특징:")
+        print("  - 대규모 카메라 촬영 표 검출 및 인식 데이터셋")
+        print("  - 실제 환경에서 촬영된 표 이미지")
+        print("  - 다양한 각도와 조명 조건")
+        
+        # 다운로드 가이드 파일 생성
+        guide_path = dataset_dir / "DOWNLOAD_GUIDE.md"
+        with open(guide_path, 'w', encoding='utf-8') as f:
+            f.write(f"""# TabRecSet (MaxKinny) 다운로드 가이드
+
+## 다운로드 방법
+
+### 방법 1: Git으로 클론
+```bash
+git clone {github_repo}
+cd TabRecSet
+# 데이터셋 파일 확인 및 다운로드
+```
+
+## 데이터셋 특징
+- 대규모 카메라 촬영 표 검출 및 인식 데이터셋
+- 실제 환경에서 촬영된 표 이미지
+- 다양한 각도와 조명 조건
+- OCR 어노테이션 포함
+
+## 사용 방법
+```python
+from utils.download_datasets import DatasetDownloader
+
+downloader = DatasetDownloader()
+tabrecset_dir = downloader.download_tabrecset_github()
+```
+""")
+        
+        # Git 클론 시도
+        if not (dataset_dir / ".git").exists():
+            try:
+                print(f"\nGitHub 저장소 클론 시도: {github_repo}")
+                subprocess.run(
+                    ["git", "clone", github_repo, str(dataset_dir)],
+                    check=False,
+                    capture_output=True
+                )
+                if (dataset_dir / ".git").exists():
+                    print(f"✅ 클론 완료: {dataset_dir}")
+                else:
+                    print("💡 수동 클론 필요:")
+                    print(f"   git clone {github_repo} {dataset_dir}")
+            except Exception as e:
+                print(f"경고: 자동 다운로드 실패: {e}")
+                print(f"💡 직접 실행: git clone {github_repo} {dataset_dir}")
+        
+        print(f"\n✅ 가이드 파일 생성: {guide_path}")
+        return dataset_dir
+    
     def save_metadata(self, tables_info: List[Dict], filename: str = "metadata.json"):
         """테이블 메타데이터 저장"""
         metadata_path = self.output_dir / filename
@@ -472,6 +723,21 @@ def main():
     print("   - 5개 도메인, 300개 질문")
     print("   사용법: 기존 방식대로 사용")
     
+    print("\n5. TableBank (GitHub)")
+    print("   - 문서 분석용 표 검출 및 인식 데이터셋")
+    print("   - Word 및 LaTeX 문서에서 추출")
+    print("   사용법: downloader.download_tablebank()")
+    
+    print("\n6. SynthTabNet (IBM)")
+    print("   - 합성적으로 생성된 표 레이아웃 (약 60만 개)")
+    print("   - PNG 이미지와 JSONL 주석")
+    print("   사용법: downloader.download_synthtabnet()")
+    
+    print("\n7. TabRecSet (MaxKinny GitHub)")
+    print("   - 대규모 카메라 촬영 표 데이터셋")
+    print("   - 실제 환경 촬영 이미지")
+    print("   사용법: downloader.download_tabrecset_github()")
+    
     print("\n📖 공개 데이터셋:")
     print("1. 공공데이터포털: https://www.data.go.kr")
     print("2. DART: https://dart.fss.or.kr")
@@ -481,6 +747,8 @@ def main():
     print("  - 초기 실험: PubTables-1M (샘플) 또는 TabRecSet")
     print("  - 한국어 특화: KorWikiTabular + RAG-Evaluation-Dataset-KO")
     print("  - 극단 케이스: TabRecSet")
+    print("  - 합성 데이터: SynthTabNet")
+    print("  - 문서 기반: TableBank")
 
 
 if __name__ == "__main__":

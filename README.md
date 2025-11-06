@@ -16,26 +16,31 @@
    - Naive하게 테이블 파싱 후 RAG
    - **베이스라인**: TableRAG, Tab2KG
 
-## 데이터셋 추천
+## 지원 데이터셋
 
-### 1. KOSIS 국가통계포털
-- **장점**: 다양한 산업/경제 통계, 복잡한 표 구조, 대규모 데이터
-- **데이터 형식**: Excel, CSV
-- **링크**: https://kosis.kr/
+### 주요 데이터셋
 
-### 2. 공공데이터포털 (data.go.kr)
-- **장점**: 한국 정부 기관의 공개 데이터, 표/차트 포함
-- **주요 데이터**: 기업 재무제표, 통계 데이터, 정책 데이터
-- **링크**: https://www.data.go.kr/
+1. **RAG-Evaluation-Dataset-KO** (활성 사용 중)
+   - 한국어 RAG 평가 데이터셋 (Allganize)
+   - 26개 테이블, 300개 질문
+   - 5개 도메인: finance, public, medical, law, commerce
+   - 자동 로드 지원
 
-### 3. 금융감독원 전자공시시스템 (DART)
-- **장점**: 실제 기업 재무제표, 매우 복잡한 표 구조, 거대한 규모
-- **데이터 형식**: XBRL, Excel
-- **링크**: https://dart.fss.or.kr/
+2. **TabRecSet** (Figshare)
+   - 대규모 표 데이터셋
+   - 실제 환경(인 와일드) 테이블 인식용
 
-### 4. 한국은행 경제통계시스템 (ECOS)
-- **장점**: 경제 지표, 복잡한 시계열 표 데이터
-- **링크**: https://ecos.bok.or.kr/
+3. **WTW-Dataset** (GitHub)
+   - 14,581개 이미지
+   - 7가지 도전적인 케이스 포함
+   - XML 형식 지원
+
+4. **PubTables-1M** (Microsoft Research)
+   - 약 100만 개의 표
+   - 과학 논문에서 추출
+   - Hugging Face 지원
+
+자세한 데이터셋 정보는 [DATASET_INFO.md](DATASET_INFO.md)를 참조하세요.
 
 ## 프로젝트 구조
 
@@ -92,9 +97,24 @@ pip install -r requirements.txt
 
 ## 사용법
 
-실험 실행:
+### 기본 실험 실행
+
 ```bash
-python experiments/run_experiments.py
+# 전체 실험 실행 (베이스라인 포함)
+python run_full_experiment.py
+
+# 모든 데이터셋으로 실험 실행
+python experiments/run_all_datasets_experiment.py
+
+# 특정 데이터셋으로 실험
+python experiments/run_multi_dataset_experiments.py --datasets rag_eval_ko
+```
+
+### 데이터셋 다운로드
+
+```bash
+# 주요 데이터셋 자동 다운로드
+python download_datasets_now.py
 ```
 
 베이스라인 모델 사용:
@@ -155,10 +175,12 @@ results = runner.experiment_2_rag_comparison(tables, queries, ground_truth, incl
 
 ## 📚 문서
 
-- **[프로젝트 전체 요약 및 다음 단계](PROJECT_SUMMARY.md)** - 🚀 **시작하기 전에 읽어보세요!**
-- [베이스라인 모델 가이드](BASELINES_GUIDE.md)
-- [비교 실험 가이드](COMPARISON_EXPERIMENTS_GUIDE.md)
-- [데이터셋 정보](DATASET_INFO.md)
-- [프로젝트 구조](PROJECT_STRUCTURE.md)
-- [빠른 시작](QUICKSTART.md)
+- **[프로젝트 전체 요약](PROJECT_SUMMARY.md)** - 🚀 **시작하기 전에 읽어보세요!**
+- [빠른 시작](QUICKSTART.md) - 빠른 실험 가이드
+- [데이터셋 정보](DATASET_INFO.md) - 지원 데이터셋 상세 정보
+- [프로젝트 구조](PROJECT_STRUCTURE.md) - 프로젝트 구조 설명
+- [베이스라인 모델 가이드](BASELINES_GUIDE.md) - 베이스라인 모델 사용법
+- [비교 실험 가이드](COMPARISON_EXPERIMENTS_GUIDE.md) - 실험 실행 방법
+- [실험 로드맵](EXPERIMENT_ROADMAP.md) - 실험 계획 및 진행 상황
+- [실험 결과](EXPERIMENT_RESULTS.md) - 최신 실험 결과
 

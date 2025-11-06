@@ -513,3 +513,5 @@ analyzer.plot_complexity_analysis(
 3. **베이스라인 통합**: TATR, Sato, TableRAG 등 실제 통합 테스트
 4. **대규모 실험 준비**: 데이터셋 확장 및 실행 계획 수립
 
+
+

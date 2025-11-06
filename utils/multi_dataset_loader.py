@@ -22,6 +22,12 @@ try:
 except ImportError:
     PUBTABLES1M_AVAILABLE = False
 
+try:
+    from utils.synthtabnet_loader import SynthTabNetLoader
+    SYNTHTABNET_AVAILABLE = True
+except ImportError:
+    SYNTHTABNET_AVAILABLE = False
+
 
 class MultiDatasetLoader:
     """다중 데이터셋 로더"""
@@ -213,6 +219,150 @@ class MultiDatasetLoader:
         print(f"✓ {len(tables)}개 테이블 로드 완료")
         return tables
     
+    def load_tablebank(self,
+                      dataset_dir: Optional[str] = None,
+                      max_tables: Optional[int] = None) -> List[pd.DataFrame]:
+        """
+        TableBank 데이터셋 로드
+        
+        Args:
+            dataset_dir: 데이터셋 디렉토리
+            max_tables: 최대 로드할 테이블 수
+        
+        Returns:
+            테이블 리스트
+        """
+        if dataset_dir is None:
+            dataset_dir = self.data_dir / "tablebank"
+        else:
+            dataset_dir = Path(dataset_dir)
+        
+        if not dataset_dir.exists():
+            print(f"경고: TableBank 디렉토리를 찾을 수 없습니다: {dataset_dir}")
+            print("다운로드 가이드를 확인하세요: data/tablebank/DOWNLOAD_GUIDE.md")
+            return []
+        
+        tables = []
+        # CSV, XLSX, XML 등 다양한 형식 지원
+        table_files = (
+            list(dataset_dir.glob("**/*.csv")) +
+            list(dataset_dir.glob("**/*.xlsx")) +
+            list(dataset_dir.glob("**/*.xls"))
+        )
+        
+        if max_tables:
+            table_files = table_files[:max_tables]
+        
+        print(f"TableBank에서 {len(table_files)}개 테이블 로드 중...")
+        for file_path in table_files:
+            try:
+                if file_path.suffix == '.csv':
+                    table = pd.read_csv(file_path)
+                elif file_path.suffix in ['.xlsx', '.xls']:
+                    table = pd.read_excel(file_path)
+                else:
+                    continue
+                
+                if not table.empty:
+                    tables.append(table)
+            except Exception as e:
+                print(f"경고: 테이블 로드 실패 ({file_path.name}): {e}")
+                continue
+        
+        print(f"✓ {len(tables)}개 테이블 로드 완료")
+        return tables
+    
+    def load_synthtabnet(self,
+                        dataset_dir: Optional[str] = None,
+                        style: Optional[str] = None,
+                        split: str = 'train',
+                        max_tables: Optional[int] = None) -> List[pd.DataFrame]:
+        """
+        SynthTabNet 데이터셋 로드
+        
+        Args:
+            dataset_dir: 데이터셋 디렉토리
+            style: 스타일 ('fintabnet', 'marketing', 'pubtabnet', 'sparse', None이면 모두)
+            split: 'train', 'test', 'val'
+            max_tables: 최대 로드할 테이블 수
+        
+        Returns:
+            테이블 리스트
+        """
+        if dataset_dir is None:
+            dataset_dir = self.data_dir / "synthtabnet"
+        else:
+            dataset_dir = Path(dataset_dir)
+        
+        if SYNTHTABNET_AVAILABLE:
+            try:
+                loader = SynthTabNetLoader(str(dataset_dir))
+                return loader.load_synthtabnet(
+                    dataset_dir=dataset_dir,
+                    style=style,
+                    split=split,
+                    max_tables=max_tables
+                )
+            except Exception as e:
+                print(f"SynthTabNet 로더 사용 실패: {e}")
+                return []
+        else:
+            print("경고: SynthTabNet 로더를 사용할 수 없습니다.")
+            print("필요시: pip install beautifulsoup4")
+            return []
+    
+    def load_tabrecset_maxkinny(self,
+                                dataset_dir: Optional[str] = None,
+                                max_tables: Optional[int] = None) -> List[pd.DataFrame]:
+        """
+        TabRecSet 데이터셋 로드 (MaxKinny GitHub 저장소)
+        
+        Args:
+            dataset_dir: 데이터셋 디렉토리
+            max_tables: 최대 로드할 테이블 수
+        
+        Returns:
+            테이블 리스트
+        """
+        if dataset_dir is None:
+            dataset_dir = self.data_dir / "tabrecset_maxkinny"
+        else:
+            dataset_dir = Path(dataset_dir)
+        
+        if not dataset_dir.exists():
+            print(f"경고: TabRecSet (MaxKinny) 디렉토리를 찾을 수 없습니다: {dataset_dir}")
+            print("다운로드 가이드를 확인하세요: data/tabrecset_maxkinny/DOWNLOAD_GUIDE.md")
+            return []
+        
+        tables = []
+        table_files = (
+            list(dataset_dir.glob("**/*.csv")) +
+            list(dataset_dir.glob("**/*.xlsx")) +
+            list(dataset_dir.glob("**/*.xls"))
+        )
+        
+        if max_tables:
+            table_files = table_files[:max_tables]
+        
+        print(f"TabRecSet (MaxKinny)에서 {len(table_files)}개 테이블 로드 중...")
+        for file_path in table_files:
+            try:
+                if file_path.suffix == '.csv':
+                    table = pd.read_csv(file_path)
+                elif file_path.suffix in ['.xlsx', '.xls']:
+                    table = pd.read_excel(file_path)
+                else:
+                    continue
+                
+                if not table.empty:
+                    tables.append(table)
+            except Exception as e:
+                print(f"경고: 테이블 로드 실패 ({file_path.name}): {e}")
+                continue
+        
+        print(f"✓ {len(tables)}개 테이블 로드 완료")
+        return tables
+    
     def load_mixed_datasets(self,
                            datasets: List[str],
                            max_tables_per_dataset: Optional[int] = None) -> Tuple[List[pd.DataFrame], Dict[str, int]]:
@@ -220,7 +370,7 @@ class MultiDatasetLoader:
         여러 데이터셋을 혼합하여 로드
         
         Args:
-            datasets: 데이터셋 이름 리스트 ('pubtables1m', 'tabrecset', 'korwiki_tabular', 'rag_eval_ko')
+            datasets: 데이터셋 이름 리스트 ('pubtables1m', 'tabrecset', 'korwiki_tabular', 'rag_eval_ko', 'tablebank', 'synthtabnet', 'tabrecset_maxkinny')
             max_tables_per_dataset: 데이터셋당 최대 테이블 수
         
         Returns:
@@ -252,6 +402,15 @@ class MultiDatasetLoader:
                 from experiments.run_experiments import ExperimentRunner
                 runner = ExperimentRunner()
                 tables = runner.load_test_data("", use_dataset=True)
+            elif dataset_name == 'tablebank':
+                tables = self.load_tablebank(max_tables=max_tables_per_dataset)
+            elif dataset_name == 'synthtabnet':
+                tables = self.load_synthtabnet(
+                    split='train',
+                    max_tables=max_tables_per_dataset
+                )
+            elif dataset_name == 'tabrecset_maxkinny':
+                tables = self.load_tabrecset_maxkinny(max_tables=max_tables_per_dataset)
             else:
                 print(f"경고: 알 수 없는 데이터셋: {dataset_name}")
                 tables = []
@@ -296,6 +455,13 @@ def main():
     tables3, counts3 = loader.load_mixed_datasets(
         datasets=['tabrecset'],
         max_tables_per_dataset=100
+    )
+    
+    # 추천 조합 4: 새로 추가된 데이터셋
+    print("\n[추천 조합 4] 새로 추가된 데이터셋 테스트")
+    tables4, counts4 = loader.load_mixed_datasets(
+        datasets=['tablebank', 'synthtabnet', 'tabrecset_maxkinny'],
+        max_tables_per_dataset=50
     )
 
 
