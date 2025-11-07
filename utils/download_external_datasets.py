@@ -264,17 +264,88 @@ ICCV 2021 논문: "Parsing Table Structures in the Wild"
 ## 출처
 - Microsoft Research: https://www.microsoft.com/en-us/research/publication/pubtables-1m/
 - GitHub: https://github.com/microsoft/table-transformer
+- Hugging Face: https://huggingface.co/datasets/bsmock/pubtables-1m
 
 ## 다운로드 방법
 
-### 방법 1: GitHub 저장소 사용
+### 방법 1: git-lfs를 사용한 전체 다운로드 (추천) ⭐
+
+**전체 데이터셋이 필요한 경우:**
+
+```bash
+# 1. git-lfs 설치 확인 및 초기화
+git lfs install
+
+# 2. 전체 데이터셋 클론 (수십 GB, 시간 오래 걸림)
+git clone https://huggingface.co/datasets/bsmock/pubtables-1m data/pubtables1m/pubtables-1m
+
+# 3. 포인터만 다운로드 (큰 파일 없이, 나중에 필요할 때만 다운로드)
+GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/bsmock/pubtables-1m data/pubtables1m/pubtables-1m
+```
+
+**Python 코드로 사용:**
+
+```python
+from utils.download_external_datasets import ExternalDatasetDownloader
+
+downloader = ExternalDatasetDownloader()
+# 전체 다운로드 (git-lfs 사용)
+pubtables_dir = downloader.download_pubtables1m_hf(use_git_lfs=True)
+```
+
+### 방법 2: Hugging Face Datasets 라이브러리 사용 (샘플만)
+
+**샘플만 필요한 경우 (권장):**
+
+```python
+from datasets import load_dataset
+import json
+from pathlib import Path
+
+# 샘플만 다운로드 (예: 1000개)
+dataset = load_dataset("bsmock/pubtables-1m", split="train", streaming=True)
+samples = []
+for i, item in enumerate(dataset):
+    if i >= 1000:
+        break
+    samples.append(item)
+
+# JSON 파일로 저장
+output_dir = Path("data/pubtables1m")
+output_dir.mkdir(parents=True, exist_ok=True)
+
+for i, sample in enumerate(samples):
+    with open(output_dir / f"table_{i:06d}.json", 'w', encoding='utf-8') as f:
+        json.dump(sample, f, ensure_ascii=False, indent=2)
+```
+
+**Python 코드로 사용:**
+
+```python
+from utils.download_external_datasets import ExternalDatasetDownloader
+
+downloader = ExternalDatasetDownloader()
+# 샘플만 다운로드 (1000개)
+pubtables_dir = downloader.download_pubtables1m_hf(num_samples=1000)
+```
+
+### 방법 3: Hugging Face Datasets Server API (샘플 확인용)
+
+**주의**: 이 방법은 첫 몇 행만 가져옵니다. 전체 다운로드에는 부적합합니다.
+
+```bash
+# 첫 100개 행만 가져오기 (샘플 확인용)
+curl -X GET "https://datasets-server.huggingface.co/first-rows?dataset=bsmock%2Fpubtables-1m&config=default&split=train&length=100" > sample.json
+```
+
+### 방법 3: GitHub 저장소 사용
 ```bash
 git clone https://github.com/microsoft/table-transformer.git
 cd table-transformer
 # 데이터셋 다운로드 스크립트 실행 (README 확인)
 ```
 
-### 방법 2: 직접 다운로드
+### 방법 4: 직접 다운로드
 1. Microsoft Research 페이지 방문
 2. "Related Tools" → "PubTables" 클릭
 3. 데이터셋 다운로드 링크 확인
@@ -291,10 +362,180 @@ cd table-transformer
 
 ## 참고
 - 대규모 데이터셋이므로 샘플만 사용하는 것을 권장
-- 전체 다운로드는 시간이 오래 걸릴 수 있음
+- 전체 다운로드는 시간이 오래 걸릴 수 있음 (수십 GB)
+- Hugging Face에서 스트리밍 방식으로 샘플만 다운로드하는 것을 권장
 """)
         
         print(f"다운로드 가이드 저장: {guide_path}")
+        return output_dir
+    
+    def download_pubtables1m_hf(self, output_dir: Optional[str] = None, num_samples: int = 1000, use_git_lfs: bool = False) -> Path:
+        """
+        Hugging Face에서 PubTables-1M 데이터셋 다운로드
+        
+        Args:
+            output_dir: 출력 디렉토리 (None이면 data/pubtables1m)
+            num_samples: 다운로드할 샘플 수 (전체는 매우 큼, git-lfs 사용 시 무시됨)
+            use_git_lfs: True면 git-lfs로 전체 다운로드, False면 datasets 라이브러리로 샘플만
+        
+        Returns:
+            다운로드된 데이터셋 디렉토리 경로
+        """
+        if output_dir is None:
+            output_dir = self.data_dir / "pubtables1m"
+        else:
+            output_dir = Path(output_dir)
+        
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        if use_git_lfs:
+            return self._download_pubtables1m_git_lfs(output_dir)
+        else:
+            return self._download_pubtables1m_datasets(output_dir, num_samples)
+    
+    def _download_pubtables1m_git_lfs(self, output_dir: Path) -> Path:
+        """git-lfs를 사용하여 전체 데이터셋 다운로드"""
+        print("="*70)
+        print("PubTables-1M 데이터셋 다운로드 (git-lfs)")
+        print("="*70)
+        
+        # git-lfs 설치 확인
+        try:
+            result = subprocess.run(
+                ['git', 'lfs', 'version'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode != 0:
+                raise FileNotFoundError("git-lfs가 설치되지 않았습니다")
+            print("✓ git-lfs 확인됨")
+        except FileNotFoundError:
+            print("✗ git-lfs가 설치되지 않았습니다")
+            print("\n설치 방법:")
+            print("1. https://git-lfs.com 방문")
+            print("2. 운영체제에 맞는 설치 파일 다운로드")
+            print("3. 또는 패키지 매니저 사용:")
+            print("   - macOS: brew install git-lfs")
+            print("   - Ubuntu: sudo apt install git-lfs")
+            print("   - Windows: choco install git-lfs")
+            raise
+        
+        # git-lfs 초기화
+        try:
+            print("\ngit-lfs 초기화 중...")
+            subprocess.run(['git', 'lfs', 'install'], check=True, timeout=30)
+            print("✓ git-lfs 초기화 완료")
+        except Exception as e:
+            print(f"✗ git-lfs 초기화 실패: {e}")
+            raise
+        
+        # 데이터셋 클론
+        repo_url = "https://huggingface.co/datasets/bsmock/pubtables-1m"
+        clone_dir = output_dir / "pubtables-1m"
+        
+        if clone_dir.exists():
+            print(f"\n⚠️  디렉토리가 이미 존재합니다: {clone_dir}")
+            response = input("덮어쓰시겠습니까? (y/N): ")
+            if response.lower() != 'y':
+                print("다운로드 취소됨")
+                return clone_dir
+            import shutil
+            shutil.rmtree(clone_dir)
+        
+        try:
+            print(f"\n데이터셋 클론 중... (이 작업은 시간이 오래 걸릴 수 있습니다)")
+            print(f"대상: {repo_url}")
+            result = subprocess.run(
+                ['git', 'clone', repo_url, str(clone_dir)],
+                capture_output=True,
+                text=True,
+                timeout=3600  # 1시간 타임아웃
+            )
+            
+            if result.returncode == 0:
+                print(f"\n✓ 다운로드 완료: {clone_dir}")
+                print("\n참고: 전체 데이터셋은 매우 큽니다 (수십 GB)")
+                print("필요한 경우 샘플만 사용하는 것을 권장합니다.")
+            else:
+                print(f"\n✗ 클론 실패: {result.stderr}")
+                raise Exception(f"git clone 실패: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            print("\n✗ 다운로드 시간 초과")
+            print("네트워크 상태를 확인하고 다시 시도하세요.")
+            raise
+        except Exception as e:
+            print(f"\n✗ 다운로드 실패: {e}")
+            print("\n대안:")
+            print("1. 포인터만 다운로드: GIT_LFS_SKIP_SMUDGE=1 git clone ...")
+            print("2. datasets 라이브러리로 샘플만 다운로드")
+            raise
+        
+        return clone_dir
+    
+    def _download_pubtables1m_datasets(self, output_dir: Path, num_samples: int) -> Path:
+        """datasets 라이브러리를 사용하여 샘플만 다운로드"""
+        try:
+            from datasets import load_dataset
+        except ImportError:
+            raise ImportError(
+                "datasets 라이브러리가 필요합니다. 설치: pip install datasets"
+            )
+        
+        print("="*70)
+        print(f"PubTables-1M 데이터셋 다운로드 (Hugging Face Datasets)")
+        print(f"샘플 수: {num_samples}개")
+        print("="*70)
+        
+        try:
+            # 스트리밍 방식으로 샘플만 다운로드
+            print("\n데이터셋 로드 중...")
+            dataset = load_dataset("bsmock/pubtables-1m", split="train", streaming=True)
+            
+            import json
+            samples = []
+            print(f"\n{num_samples}개 샘플 다운로드 중...")
+            for i, item in enumerate(tqdm(dataset, total=num_samples, desc="다운로드")):
+                if i >= num_samples:
+                    break
+                samples.append(item)
+            
+            # JSON 파일로 저장
+            print(f"\n{len(samples)}개 샘플 저장 중...")
+            for i, sample in enumerate(tqdm(samples, desc="저장")):
+                output_file = output_dir / f"table_{i:06d}.json"
+                
+                # bytes 타입을 base64로 인코딩하거나 제거
+                sample_clean = {}
+                for key, value in sample.items():
+                    if isinstance(value, bytes):
+                        # bytes는 base64로 인코딩
+                        import base64
+                        sample_clean[key] = base64.b64encode(value).decode('utf-8')
+                    elif isinstance(value, dict):
+                        # 딕셔너리 재귀 처리
+                        sample_clean[key] = {
+                            k: base64.b64encode(v).decode('utf-8') if isinstance(v, bytes) else v
+                            for k, v in value.items()
+                        }
+                    else:
+                        sample_clean[key] = value
+                
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json.dump(sample_clean, f, ensure_ascii=False, indent=2)
+            
+            print(f"\n✓ 다운로드 완료: {output_dir}")
+            print(f"  총 {len(samples)}개 테이블 저장됨")
+            
+        except Exception as e:
+            print(f"\n✗ 다운로드 실패: {e}")
+            print("\n대안:")
+            print("1. git-lfs로 전체 다운로드: use_git_lfs=True")
+            print("2. 수동으로 Hugging Face에서 다운로드")
+            print("3. Microsoft Research 페이지에서 다운로드")
+            raise
+        
         return output_dir
     
     def download_all(self):
@@ -360,6 +601,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 

@@ -17,10 +17,10 @@ pip install -r requirements.txt
 ## 2. 샘플 데이터 생성
 
 ```bash
-python utils/download_datasets.py
+python download_datasets_now.py
 ```
 
-이 명령어는 `data/sample_tables/` 디렉토리에 샘플 테이블 10개를 생성합니다.
+이 명령어는 `data/sample_tables/` 디렉토리에 샘플 테이블을 생성합니다.
 
 ## 3. 기본 사용법
 
@@ -107,6 +107,9 @@ for result in results:
 
 ```bash
 # 전체 실험 실행
+python run_full_experiment.py
+
+# 또는 실험 스크립트 직접 실행
 python experiments/run_experiments.py
 ```
 
@@ -154,4 +157,3 @@ rag = KGRAGSystem(
 
 ### 한국어 인코딩 오류
 - 파일 읽기/쓰기 시 `encoding='utf-8'` 사용 확인
-
